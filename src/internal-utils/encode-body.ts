@@ -1,12 +1,10 @@
 import type { AnyBody, HttpRequestType } from 'yaschema-api';
 
-import type { EncodedRequestBody } from '../api-fetch/types/EncodedRequestBody';
-
-type RequestBodyEncoder = (body: AnyBody) => EncodedRequestBody;
+type RequestBodyEncoder = (body: AnyBody) => Buffer | undefined;
 
 const encodersByRequestType: Record<HttpRequestType, RequestBodyEncoder> = {
   'form-data': () => undefined,
-  json: JSON.stringify
+  json: (body) => Buffer.from(JSON.stringify(body), 'utf-8')
 };
 
 export const encodeBody = ({ requestType = 'json', body }: { requestType: HttpRequestType | undefined; body: AnyBody }) =>
