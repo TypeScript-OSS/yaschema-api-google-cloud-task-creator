@@ -35,6 +35,7 @@ const DEFAULT_TASK_LIMIT_TYPE = 'throttle';
 const ONE_SEC_MSEC = 1000;
 const ONE_MSEC_NSEC = 1000000;
 
+/** When limiting is used, the api.name is the primary key used for deduplication */
 export interface CreateGoogleCloudTaskOptions {
   /**
    * Override the configured request validation mode.
@@ -49,6 +50,8 @@ export interface CreateGoogleCloudTaskOptions {
   limitMSec?: number;
   /** @defaultValue `'throttle'` */
   limitType?: LimitType;
+  /** If provided, extends the key used for deduplication (ex. if it's dependant on the specific request parameters) */
+  limitNameExtension?: string;
 }
 
 /** Uses `new CloudTasksClient().createTask` to access the specified API */
@@ -71,7 +74,8 @@ export const createGoogleCloudTask = async <
     creationOptions,
     limitMode = DEFAULT_TASK_LIMIT_MODE,
     limitMSec = DEFAULT_TASK_LIMIT_MSEC,
-    limitType = DEFAULT_TASK_LIMIT_TYPE
+    limitType = DEFAULT_TASK_LIMIT_TYPE,
+    limitNameExtension = ''
   }: CreateGoogleCloudTaskOptions = {}
 ): Promise<CreateTaskResult> => {
   if (api.method === 'LINK' || api.method === 'UNLINK') {
@@ -98,7 +102,9 @@ export const createGoogleCloudTask = async <
           limitType !== 'none' && limitMSec > 0
             ? `projects/${getGoogleCloudProjectForRouteType(api.routeType)}/locations/${getGoogleCloudLocationForRouteType(
                 api.routeType
-              )}/queues/${getGoogleCloudTaskQueueForRouteType(api.routeType)}/tasks/${normalizeTaskId(api.name)}-${scheduleTimeMSec}`
+              )}/queues/${getGoogleCloudTaskQueueForRouteType(api.routeType)}/tasks/${normalizeTaskId(
+                `${api.name}-${limitNameExtension}`
+              )}-${scheduleTimeMSec}`
             : null,
         scheduleTime:
           limitType !== 'none' && limitMSec > 0 && limitMode === 'trailing'
