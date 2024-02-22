@@ -22,9 +22,18 @@ import { getDefaultRequestValidationMode } from '../../config/validation-mode';
 import { getGoogleCloudTasksClient } from '../../internal-utils/getGoogleCloudTasksClient';
 import { internalCreateGoogleCloudTask } from '../../internal-utils/internalCreateGoogleCloudTask';
 import type { CreateTaskRequest } from '../../types/CreateTaskRequest';
+import type { LimitMode } from '../../types/LimitMode';
+import type { LimitType } from '../../types/LimitType';
 import { CreateTaskRequirementsError } from '../types/CreateTaskRequirementsError';
 import type { CreateTaskResult } from '../types/CreateTaskResult';
 import { generateGoogleCloudCreateTaskRequirementsFromApiRequest } from './internal/generateGoogleCloudCreateTaskRequirementsFromApiRequest';
+
+const DEFAULT_TASK_LIMIT_MODE = 'trailing';
+const DEFAULT_TASK_LIMIT_MSEC = 250;
+const DEFAULT_TASK_LIMIT_TYPE = 'throttle';
+
+const ONE_SEC_MSEC = 1000;
+const ONE_MSEC_NSEC = 1000000;
 
 export interface CreateGoogleCloudTaskOptions {
   /**
@@ -34,6 +43,12 @@ export interface CreateGoogleCloudTaskOptions {
    */
   requestValidationMode?: ValidationMode;
   creationOptions?: CallOptions;
+  /** @defaultValue `'trailing'` */
+  limitMode?: LimitMode;
+  /** @defaultValue `250` */
+  limitMSec?: number;
+  /** @defaultValue `'throttle'` */
+  limitType?: LimitType;
 }
 
 /** Uses `new CloudTasksClient().createTask` to access the specified API */
@@ -51,7 +66,13 @@ export const createGoogleCloudTask = async <
 >(
   api: HttpApi<ReqHeadersT, ReqParamsT, ReqQueryT, ReqBodyT, ResStatusT, ResHeadersT, ResBodyT, ErrResStatusT, ErrResHeadersT, ErrResBodyT>,
   req: ApiRequest<ReqHeadersT, ReqParamsT, ReqQueryT, ReqBodyT>,
-  { requestValidationMode = getDefaultRequestValidationMode(), creationOptions }: CreateGoogleCloudTaskOptions = {}
+  {
+    requestValidationMode = getDefaultRequestValidationMode(),
+    creationOptions,
+    limitMode = DEFAULT_TASK_LIMIT_MODE,
+    limitMSec = DEFAULT_TASK_LIMIT_MSEC,
+    limitType = DEFAULT_TASK_LIMIT_TYPE
+  }: CreateGoogleCloudTaskOptions = {}
 ): Promise<CreateTaskResult> => {
   if (api.method === 'LINK' || api.method === 'UNLINK') {
     throw new Error("LINK and UNLINK aren't supported by yaschema-api-google-cloud-task-creator");
@@ -64,6 +85,8 @@ export const createGoogleCloudTask = async <
       validationMode: requestValidationMode
     });
 
+    const scheduleTimeMSec = getScheduleTimeMSec({ limitMode, limitMSec });
+
     const request: CreateTaskRequest = {
       parent: getGoogleCloudTasksClient().queuePath(
         getGoogleCloudProjectForRouteType(api.routeType),
@@ -71,6 +94,16 @@ export const createGoogleCloudTask = async <
         getGoogleCloudTaskQueueForRouteType(api.routeType)
       ),
       task: {
+        name:
+          limitType !== 'none' && limitMSec > 0
+            ? `projects/${getGoogleCloudProjectForRouteType(api.routeType)}/locations/${getGoogleCloudLocationForRouteType(
+                api.routeType
+              )}/queues/${getGoogleCloudTaskQueueForRouteType(api.routeType)}/tasks/${normalizeTaskId(api.name)}-${scheduleTimeMSec}`
+            : null,
+        scheduleTime:
+          limitType !== 'none' && limitMSec > 0 && limitMode === 'trailing'
+            ? { seconds: scheduleTimeMSec / ONE_SEC_MSEC, nanos: (scheduleTimeMSec % ONE_SEC_MSEC) * ONE_MSEC_NSEC }
+            : undefined,
         httpRequest: {
           httpMethod: api.method,
           headers,
@@ -104,3 +137,16 @@ export const createGoogleCloudTask = async <
     }
   }
 };
+
+// Helpers
+
+const getScheduleTimeMSec = ({ limitMode, limitMSec }: { limitMode: LimitMode; limitMSec: number }) => {
+  switch (limitMode) {
+    case 'leading':
+      return Math.floor(Date.now() / limitMSec) * limitMSec;
+    case 'trailing':
+      return Math.ceil(Date.now() / limitMSec) * limitMSec;
+  }
+};
+
+const normalizeTaskId = (name: string) => name.replace(/[^A-Za-z0-9_]+/g, '-');
