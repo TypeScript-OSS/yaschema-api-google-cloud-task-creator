@@ -20,6 +20,7 @@ import { getOnDidCreateTaskHandler } from '../../config/on-did-create-task';
 import { getOnWillCreateTaskHandler } from '../../config/on-will-create-task';
 import { getDefaultRequestValidationMode } from '../../config/validation-mode';
 import { getGoogleCloudTasksClient } from '../../internal-utils/getGoogleCloudTasksClient';
+import { getScheduleTimeMSec } from '../../internal-utils/getScheduleTimeMSec';
 import { internalCreateGoogleCloudTask } from '../../internal-utils/internalCreateGoogleCloudTask';
 import type { CreateTaskRequest } from '../../types/CreateTaskRequest';
 import type { LimitMode } from '../../types/LimitMode';
@@ -107,8 +108,8 @@ export const createGoogleCloudTask = async <
               )}-${scheduleTimeMSec}`
             : null,
         scheduleTime:
-          limitType !== 'none' && limitMSec > 0 && limitMode === 'trailing'
-            ? { seconds: scheduleTimeMSec / ONE_SEC_MSEC, nanos: (scheduleTimeMSec % ONE_SEC_MSEC) * ONE_MSEC_NSEC }
+          limitMSec > 0 && limitMode === 'trailing'
+            ? { seconds: Math.floor(scheduleTimeMSec / ONE_SEC_MSEC), nanos: (scheduleTimeMSec % ONE_SEC_MSEC) * ONE_MSEC_NSEC }
             : undefined,
         httpRequest: {
           httpMethod: api.method,
@@ -145,14 +146,5 @@ export const createGoogleCloudTask = async <
 };
 
 // Helpers
-
-const getScheduleTimeMSec = ({ limitMode, limitMSec }: { limitMode: LimitMode; limitMSec: number }) => {
-  switch (limitMode) {
-    case 'leading':
-      return Math.floor(Date.now() / limitMSec) * limitMSec;
-    case 'trailing':
-      return Math.ceil(Date.now() / limitMSec) * limitMSec;
-  }
-};
 
 const normalizeTaskId = (name: string) => name.replace(/[^A-Za-z0-9_]+/g, '-');
