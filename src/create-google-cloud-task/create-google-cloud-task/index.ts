@@ -134,7 +134,14 @@ export const createGoogleCloudTask = async <
 
       return { ok: true };
     } catch (e) {
-      return { ok: false, error: e instanceof Error ? e.message : undefined };
+      const error = e instanceof Error ? e.message : undefined;
+
+      // If the task is already enqueued, treat as success
+      if (error?.includes('ALREADY_EXISTS') ?? false) {
+        return { ok: true };
+      }
+
+      return { ok: false, error };
     }
   } catch (e) {
     if (e instanceof CreateTaskRequirementsError) {
