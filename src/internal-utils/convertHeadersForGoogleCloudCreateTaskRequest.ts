@@ -1,6 +1,7 @@
 import type { AnyHeaders, HttpRequestType } from 'yaschema-api';
 
 const defaultContentTypeByRequestType: Record<HttpRequestType, string | undefined> = {
+  binary: undefined, // Not supported
   'form-data': undefined, // Not supported
   json: 'application/json'
 };
@@ -13,7 +14,9 @@ export const convertHeadersForGoogleCloudCreateTaskRequest = ({
   requestType: HttpRequestType | undefined;
   headers: AnyHeaders;
 }) => {
-  if (requestType === 'form-data') {
+  if (requestType === 'binary') {
+    throw new Error("binary isn't supported with yaschema-api-google-cloud-task-creator");
+  } else if (requestType === 'form-data') {
     throw new Error("form-data isn't supported with yaschema-api-google-cloud-task-creator");
   }
 

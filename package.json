@@ -1,6 +1,6 @@
 {
   "name": "yaschema-api-google-cloud-task-creator",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Google Cloud createTask support for yaschema-api",
   "keywords": [
     "schema",
@@ -35,7 +35,7 @@
     "lodash": "^4.17.21",
     "uuid": "9.0.1",
     "yaschema": "^3.4.0",
-    "yaschema-api": "^3.4.4"
+    "yaschema-api": "^3.5.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
