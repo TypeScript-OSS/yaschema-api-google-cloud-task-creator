@@ -1,3 +1,4 @@
+import type { google } from '@google-cloud/tasks/build/protos/protos';
 import type { CallOptions } from 'google-gax';
 import { v4 as uuid } from 'uuid';
 import type { ValidationMode } from 'yaschema';
@@ -45,6 +46,8 @@ export interface CreateGoogleCloudTaskOptions {
    */
   requestValidationMode?: ValidationMode;
   creationOptions?: CallOptions;
+  /** @defaultValue `0` */
+  delayMSec?: number;
   /** @defaultValue `'trailing'` */
   limitMode?: LimitMode;
   /** @defaultValue `250` */
@@ -73,6 +76,7 @@ export const createGoogleCloudTask = async <
   {
     requestValidationMode = getDefaultRequestValidationMode(),
     creationOptions,
+    delayMSec = 0,
     limitMode = DEFAULT_TASK_LIMIT_MODE,
     limitMSec = DEFAULT_TASK_LIMIT_MSEC,
     limitType = DEFAULT_TASK_LIMIT_TYPE,
@@ -90,7 +94,15 @@ export const createGoogleCloudTask = async <
       validationMode: requestValidationMode
     });
 
-    const scheduleTimeMSec = getScheduleTimeMSec({ limitMode, limitMSec });
+    const scheduleTimeMSec = getScheduleTimeMSec({ delayMSec, limitMode, limitMSec });
+
+    let scheduleTime: google.protobuf.ITimestamp | undefined;
+    if (limitMSec > 0 && limitMode === 'trailing') {
+      scheduleTime = { seconds: Math.floor(scheduleTimeMSec / ONE_SEC_MSEC), nanos: (scheduleTimeMSec % ONE_SEC_MSEC) * ONE_MSEC_NSEC };
+    } else if (delayMSec > 0) {
+      const runTimeMSec = Date.now() + delayMSec;
+      scheduleTime = { seconds: Math.floor(runTimeMSec / ONE_SEC_MSEC), nanos: (runTimeMSec % ONE_SEC_MSEC) * ONE_MSEC_NSEC };
+    }
 
     const request: CreateTaskRequest = {
       parent: getGoogleCloudTasksClient().queuePath(
@@ -107,10 +119,7 @@ export const createGoogleCloudTask = async <
                 `${api.name}-${limitNameExtension}`
               )}-${scheduleTimeMSec}`
             : null,
-        scheduleTime:
-          limitMSec > 0 && limitMode === 'trailing'
-            ? { seconds: Math.floor(scheduleTimeMSec / ONE_SEC_MSEC), nanos: (scheduleTimeMSec % ONE_SEC_MSEC) * ONE_MSEC_NSEC }
-            : undefined,
+        scheduleTime,
         httpRequest: {
           httpMethod: api.method,
           headers,
