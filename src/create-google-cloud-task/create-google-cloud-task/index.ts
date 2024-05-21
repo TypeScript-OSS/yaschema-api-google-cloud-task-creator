@@ -20,19 +20,17 @@ import { getGoogleCloudTaskQueueForRouteType } from '../../config/google-cloud-t
 import { getOnDidCreateTaskHandler } from '../../config/on-did-create-task';
 import { getOnWillCreateTaskHandler } from '../../config/on-will-create-task';
 import { getDefaultRequestValidationMode } from '../../config/validation-mode';
+import { DEFAULT_TASK_LIMIT_MODE, DEFAULT_TASK_LIMIT_MSEC, DEFAULT_TASK_LIMIT_TYPE } from '../../consts/defaults';
 import { getGoogleCloudTasksClient } from '../../internal-utils/getGoogleCloudTasksClient';
 import { internalCreateGoogleCloudTask } from '../../internal-utils/internalCreateGoogleCloudTask';
 import type { CreateTaskRequest } from '../../types/CreateTaskRequest';
 import type { LimitMode } from '../../types/LimitMode';
 import type { LimitType } from '../../types/LimitType';
 import { getScheduleTimeMSec } from '../../utils/getScheduleTimeMSec';
+import { getTaskName } from '../../utils/getTaskName';
 import { CreateTaskRequirementsError } from '../types/CreateTaskRequirementsError';
 import type { CreateTaskResult } from '../types/CreateTaskResult';
 import { generateGoogleCloudCreateTaskRequirementsFromApiRequest } from './internal/generateGoogleCloudCreateTaskRequirementsFromApiRequest';
-
-const DEFAULT_TASK_LIMIT_MODE = 'trailing';
-const DEFAULT_TASK_LIMIT_MSEC = 250;
-const DEFAULT_TASK_LIMIT_TYPE = 'throttle';
 
 const ONE_SEC_MSEC = 1000;
 const ONE_MSEC_NSEC = 1000000;
@@ -103,14 +101,7 @@ export const createGoogleCloudTask = async <
       scheduleTime = { seconds: Math.floor(scheduleTimeMSec / ONE_SEC_MSEC), nanos: (scheduleTimeMSec % ONE_SEC_MSEC) * ONE_MSEC_NSEC };
     }
 
-    const name =
-      limitType !== 'none' && limitMSec > 0
-        ? `projects/${getGoogleCloudProjectForRouteType(api.routeType)}/locations/${getGoogleCloudLocationForRouteType(
-            api.routeType
-          )}/queues/${getGoogleCloudTaskQueueForRouteType(api.routeType)}/tasks/${normalizeTaskId(
-            `${api.name}-${limitNameExtension}`
-          )}-${scheduleTimeMSec}`
-        : null;
+    const name = getTaskName(api, { limitType, limitMSec, limitNameExtension, scheduleTimeMSec });
     if (name !== null && alreadyScheduledNames.has(name)) {
       // Already scheduled, nothing more to do
       return { ok: true };
@@ -173,7 +164,3 @@ export const createGoogleCloudTask = async <
     }
   }
 };
-
-// Helpers
-
-const normalizeTaskId = (name: string) => name.replace(/[^A-Za-z0-9_]+/g, '-');
