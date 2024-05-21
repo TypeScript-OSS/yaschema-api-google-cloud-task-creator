@@ -21,11 +21,11 @@ import { getOnDidCreateTaskHandler } from '../../config/on-did-create-task';
 import { getOnWillCreateTaskHandler } from '../../config/on-will-create-task';
 import { getDefaultRequestValidationMode } from '../../config/validation-mode';
 import { getGoogleCloudTasksClient } from '../../internal-utils/getGoogleCloudTasksClient';
-import { getScheduleTimeMSec } from '../../internal-utils/getScheduleTimeMSec';
 import { internalCreateGoogleCloudTask } from '../../internal-utils/internalCreateGoogleCloudTask';
 import type { CreateTaskRequest } from '../../types/CreateTaskRequest';
 import type { LimitMode } from '../../types/LimitMode';
 import type { LimitType } from '../../types/LimitType';
+import { getScheduleTimeMSec } from '../../utils/getScheduleTimeMSec';
 import { CreateTaskRequirementsError } from '../types/CreateTaskRequirementsError';
 import type { CreateTaskResult } from '../types/CreateTaskResult';
 import { generateGoogleCloudCreateTaskRequirementsFromApiRequest } from './internal/generateGoogleCloudCreateTaskRequirementsFromApiRequest';
@@ -36,6 +36,8 @@ const DEFAULT_TASK_LIMIT_TYPE = 'throttle';
 
 const ONE_SEC_MSEC = 1000;
 const ONE_MSEC_NSEC = 1000000;
+
+const alreadyScheduledNames = new Set<string>();
 
 /** When limiting is used, the api.name is the primary key used for deduplication */
 export interface CreateGoogleCloudTaskOptions {
@@ -97,11 +99,21 @@ export const createGoogleCloudTask = async <
     const scheduleTimeMSec = getScheduleTimeMSec({ delayMSec, limitMode, limitMSec });
 
     let scheduleTime: google.protobuf.ITimestamp | undefined;
-    if (limitMSec > 0 && limitMode === 'trailing') {
+    if (Date.now() > scheduleTimeMSec) {
       scheduleTime = { seconds: Math.floor(scheduleTimeMSec / ONE_SEC_MSEC), nanos: (scheduleTimeMSec % ONE_SEC_MSEC) * ONE_MSEC_NSEC };
-    } else if (delayMSec > 0) {
-      const runTimeMSec = Date.now() + delayMSec;
-      scheduleTime = { seconds: Math.floor(runTimeMSec / ONE_SEC_MSEC), nanos: (runTimeMSec % ONE_SEC_MSEC) * ONE_MSEC_NSEC };
+    }
+
+    const name =
+      limitType !== 'none' && limitMSec > 0
+        ? `projects/${getGoogleCloudProjectForRouteType(api.routeType)}/locations/${getGoogleCloudLocationForRouteType(
+            api.routeType
+          )}/queues/${getGoogleCloudTaskQueueForRouteType(api.routeType)}/tasks/${normalizeTaskId(
+            `${api.name}-${limitNameExtension}`
+          )}-${scheduleTimeMSec}`
+        : null;
+    if (name !== null && alreadyScheduledNames.has(name)) {
+      // Already scheduled, nothing more to do
+      return { ok: true };
     }
 
     const request: CreateTaskRequest = {
@@ -111,14 +123,7 @@ export const createGoogleCloudTask = async <
         getGoogleCloudTaskQueueForRouteType(api.routeType)
       ),
       task: {
-        name:
-          limitType !== 'none' && limitMSec > 0
-            ? `projects/${getGoogleCloudProjectForRouteType(api.routeType)}/locations/${getGoogleCloudLocationForRouteType(
-                api.routeType
-              )}/queues/${getGoogleCloudTaskQueueForRouteType(api.routeType)}/tasks/${normalizeTaskId(
-                `${api.name}-${limitNameExtension}`
-              )}-${scheduleTimeMSec}`
-            : null,
+        name,
         scheduleTime,
         httpRequest: {
           httpMethod: api.method,
@@ -131,6 +136,10 @@ export const createGoogleCloudTask = async <
         }
       }
     };
+
+    if (name !== null) {
+      alreadyScheduledNames.add(name);
+    }
 
     try {
       const createTaskPromise = internalCreateGoogleCloudTask(request, creationOptions);
@@ -148,6 +157,10 @@ export const createGoogleCloudTask = async <
       // If the task is already enqueued, treat as success
       if (error?.includes('ALREADY_EXISTS') ?? false) {
         return { ok: true };
+      }
+
+      if (name !== null) {
+        alreadyScheduledNames.delete(name);
       }
 
       return { ok: false, error };
