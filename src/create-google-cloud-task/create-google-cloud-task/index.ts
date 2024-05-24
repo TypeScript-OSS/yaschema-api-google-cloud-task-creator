@@ -104,7 +104,7 @@ export const createGoogleCloudTask = async <
     const name = getTaskName(api, { limitType, limitMSec, limitNameExtension, scheduleTimeMSec });
     if (name !== null && alreadyScheduledNames.has(name)) {
       // Already scheduled, nothing more to do
-      return { ok: true };
+      return { ok: true, createdNewTask: false };
     }
 
     const request: CreateTaskRequest = {
@@ -141,13 +141,13 @@ export const createGoogleCloudTask = async <
 
       getOnDidCreateTaskHandler()({ api: api as any as GenericHttpApi, req, reqId, task });
 
-      return { ok: true };
+      return { ok: true, createdNewTask: true };
     } catch (e) {
       const error = e instanceof Error ? e.message : undefined;
 
       // If the task is already enqueued, treat as success
       if (error?.includes('ALREADY_EXISTS') ?? false) {
-        return { ok: true };
+        return { ok: true, createdNewTask: false };
       }
 
       if (name !== null) {
