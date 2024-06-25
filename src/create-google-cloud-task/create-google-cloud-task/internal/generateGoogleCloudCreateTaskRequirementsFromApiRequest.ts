@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import type { ValidationMode } from 'yaschema';
 import { schema } from 'yaschema';
 import type {
@@ -14,11 +13,12 @@ import type {
 } from 'yaschema-api';
 import { checkRequestValidation } from 'yaschema-api';
 
-import { triggerOnRequestValidationErrorHandler } from '../../../config/on-request-validation-error';
-import { convertHeadersForGoogleCloudCreateTaskRequest } from '../../../internal-utils/convertHeadersForGoogleCloudCreateTaskRequest';
-import { encodeBody } from '../../../internal-utils/encode-body';
-import { CreateTaskRequirementsError } from '../../types/CreateTaskRequirementsError';
-import { determineApiUrlUsingPreSerializedParts } from './determine-api-url-using-pre-serialized-parts';
+import { triggerOnRequestValidationErrorHandler } from '../../../config/on-request-validation-error.js';
+import { convertHeadersForGoogleCloudCreateTaskRequest } from '../../../internal-utils/convertHeadersForGoogleCloudCreateTaskRequest.js';
+import { encodeBody } from '../../../internal-utils/encode-body.js';
+import { safeGet } from '../../../internal-utils/safe-get.js';
+import { CreateTaskRequirementsError } from '../../types/CreateTaskRequirementsError.js';
+import { determineApiUrlUsingPreSerializedParts } from './determine-api-url-using-pre-serialized-parts.js';
 
 const anyStringSerializableTypeSchema = schema.oneOf3(
   schema.number().setAllowedSerializationForms(['number', 'string']),
@@ -96,7 +96,7 @@ export const generateGoogleCloudCreateTaskRequirementsFromApiRequest = async <
   try {
     encodedBody = reqBody.serialized !== undefined ? encodeBody({ requestType: api.requestType, body: reqBody.serialized }) : undefined;
   } catch (e) {
-    throw new CreateTaskRequirementsError(_.get(e, 'message') ?? '');
+    throw new CreateTaskRequirementsError(safeGet(e, 'message') ?? '');
   }
 
   const url = determineApiUrlUsingPreSerializedParts(api, {

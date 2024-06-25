@@ -1,2 +1,2 @@
-export * from './CreateTaskRequirementsError';
-export * from './CreateTaskResult';
+export * from './CreateTaskRequirementsError.js';
+export * from './CreateTaskResult.js';

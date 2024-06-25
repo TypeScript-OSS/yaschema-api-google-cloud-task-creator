@@ -1,2 +1,2 @@
-export * from './create-google-cloud-task';
-export * from './types/exports';
+export * from './create-google-cloud-task/index.js';
+export * from './types/exports.js';

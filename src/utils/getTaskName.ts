@@ -1,8 +1,8 @@
 import type { AnyBody, AnyHeaders, AnyParams, AnyQuery, AnyStatus, HttpApi } from 'yaschema-api';
 
-import { getGoogleCloudLocationForRouteType } from '../config/google-cloud-location';
-import { getGoogleCloudProjectForRouteType } from '../config/google-cloud-project';
-import { getGoogleCloudTaskQueueForRouteType } from '../config/google-cloud-task-queue';
+import { getGoogleCloudLocationForRouteType } from '../config/google-cloud-location.js';
+import { getGoogleCloudProjectForRouteType } from '../config/google-cloud-project.js';
+import { getGoogleCloudTaskQueueForRouteType } from '../config/google-cloud-task-queue.js';
 import type { LimitType } from '../types/LimitType';
 
 export const getTaskName = <

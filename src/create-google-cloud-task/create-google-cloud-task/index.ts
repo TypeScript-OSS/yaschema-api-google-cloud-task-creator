@@ -13,24 +13,24 @@ import {
   type HttpApi
 } from 'yaschema-api';
 
-import { getGoogleCloudLocationForRouteType } from '../../config/google-cloud-location';
-import { getGoogleCloudProjectForRouteType } from '../../config/google-cloud-project';
-import { getGoogleCloudServiceAccountEmailForRouteType } from '../../config/google-cloud-service-account-email';
-import { getGoogleCloudTaskQueueForRouteType } from '../../config/google-cloud-task-queue';
-import { getOnDidCreateTaskHandler } from '../../config/on-did-create-task';
-import { getOnWillCreateTaskHandler } from '../../config/on-will-create-task';
-import { getDefaultRequestValidationMode } from '../../config/validation-mode';
-import { DEFAULT_TASK_LIMIT_MODE, DEFAULT_TASK_LIMIT_MSEC, DEFAULT_TASK_LIMIT_TYPE } from '../../consts/defaults';
-import { getGoogleCloudTasksClient } from '../../internal-utils/getGoogleCloudTasksClient';
-import { internalCreateGoogleCloudTask } from '../../internal-utils/internalCreateGoogleCloudTask';
+import { getGoogleCloudLocationForRouteType } from '../../config/google-cloud-location.js';
+import { getGoogleCloudProjectForRouteType } from '../../config/google-cloud-project.js';
+import { getGoogleCloudServiceAccountEmailForRouteType } from '../../config/google-cloud-service-account-email.js';
+import { getGoogleCloudTaskQueueForRouteType } from '../../config/google-cloud-task-queue.js';
+import { getOnDidCreateTaskHandler } from '../../config/on-did-create-task.js';
+import { getOnWillCreateTaskHandler } from '../../config/on-will-create-task.js';
+import { getDefaultRequestValidationMode } from '../../config/validation-mode.js';
+import { DEFAULT_TASK_LIMIT_MODE, DEFAULT_TASK_LIMIT_MSEC, DEFAULT_TASK_LIMIT_TYPE } from '../../consts/defaults.js';
+import { getGoogleCloudTasksClient } from '../../internal-utils/getGoogleCloudTasksClient.js';
+import { internalCreateGoogleCloudTask } from '../../internal-utils/internalCreateGoogleCloudTask.js';
 import type { CreateTaskRequest } from '../../types/CreateTaskRequest';
 import type { LimitMode } from '../../types/LimitMode';
 import type { LimitType } from '../../types/LimitType';
-import { getScheduleTimeMSec } from '../../utils/getScheduleTimeMSec';
-import { getTaskName } from '../../utils/getTaskName';
-import { CreateTaskRequirementsError } from '../types/CreateTaskRequirementsError';
+import { getScheduleTimeMSec } from '../../utils/getScheduleTimeMSec.js';
+import { getTaskName } from '../../utils/getTaskName.js';
+import { CreateTaskRequirementsError } from '../types/CreateTaskRequirementsError.js';
 import type { CreateTaskResult } from '../types/CreateTaskResult';
-import { generateGoogleCloudCreateTaskRequirementsFromApiRequest } from './internal/generateGoogleCloudCreateTaskRequirementsFromApiRequest';
+import { generateGoogleCloudCreateTaskRequirementsFromApiRequest } from './internal/generateGoogleCloudCreateTaskRequirementsFromApiRequest.js';
 
 const ONE_SEC_MSEC = 1000;
 const ONE_MSEC_NSEC = 1000000;
