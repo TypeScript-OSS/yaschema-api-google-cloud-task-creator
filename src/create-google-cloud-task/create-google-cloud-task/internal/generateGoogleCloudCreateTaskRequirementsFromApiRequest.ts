@@ -77,7 +77,8 @@ export const generateGoogleCloudCreateTaskRequirementsFromApiRequest = async <
         api: api as any as GenericHttpApi,
         req: req as GenericApiRequest,
         invalidPart: checkedRequestValidation.invalidPart,
-        validationError: checkedRequestValidation.validationError
+        validationError: checkedRequestValidation.validationError,
+        validationErrorPath: checkedRequestValidation.validationErrorPath
       });
     }
     if (!checkedRequestValidation.ok) {
