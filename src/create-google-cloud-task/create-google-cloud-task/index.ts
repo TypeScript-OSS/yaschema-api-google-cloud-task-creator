@@ -37,7 +37,7 @@ const ONE_MSEC_NSEC = 1000000;
 
 const alreadyScheduledNames = new Set<string>();
 
-const defaultCallOptions: CallOptions = { timeout: 90 * ONE_SEC_MSEC };
+const defaultCallOptions: CallOptions = { timeout: 30 * ONE_SEC_MSEC };
 
 /** When limiting is used, the api.name is the primary key used for deduplication */
 export interface CreateGoogleCloudTaskOptions {
@@ -47,7 +47,7 @@ export interface CreateGoogleCloudTaskOptions {
    * @see `setDefaultRequestValidationMode`
    */
   requestValidationMode?: ValidationMode;
-  /** The default timeout is 90000ms (90s) */
+  /** The default timeout is 30000ms (30s) */
   creationOptions?: CallOptions;
   /** @defaultValue `0` */
   delayMSec?: number;
