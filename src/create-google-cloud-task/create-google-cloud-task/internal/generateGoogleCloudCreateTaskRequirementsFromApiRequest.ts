@@ -1,5 +1,4 @@
 import type { ValidationMode } from 'yaschema';
-import { schema } from 'yaschema';
 import type {
   AnyBody,
   AnyHeaders,
@@ -11,7 +10,7 @@ import type {
   GenericHttpApi,
   HttpApi
 } from 'yaschema-api';
-import { checkRequestValidation } from 'yaschema-api';
+import { anyReqBodySchema, anyReqHeadersSchema, anyReqParamsSchema, anyReqQuerySchema, checkRequestValidation } from 'yaschema-api';
 
 import { triggerOnRequestValidationErrorHandler } from '../../../config/on-request-validation-error.js';
 import { convertHeadersForGoogleCloudCreateTaskRequest } from '../../../internal-utils/convertHeadersForGoogleCloudCreateTaskRequest.js';
@@ -19,19 +18,6 @@ import { encodeBody } from '../../../internal-utils/encode-body.js';
 import { safeGet } from '../../../internal-utils/safe-get.js';
 import { CreateTaskRequirementsError } from '../../types/CreateTaskRequirementsError.js';
 import { determineApiUrlUsingPreSerializedParts } from './determine-api-url-using-pre-serialized-parts.js';
-
-const anyStringSerializableTypeSchema = schema.oneOf3(
-  schema.number().setAllowedSerializationForms(['number', 'string']),
-  schema.boolean().setAllowedSerializationForms(['boolean', 'string']),
-  schema.string()
-);
-
-const anyReqHeadersSchema = schema.record(schema.string(), anyStringSerializableTypeSchema).optional();
-const anyReqParamsSchema = schema.record(schema.string(), anyStringSerializableTypeSchema).optional();
-const anyReqQuerySchema = schema
-  .record(schema.string(), schema.oneOf(anyStringSerializableTypeSchema, schema.array({ items: anyStringSerializableTypeSchema })))
-  .optional();
-const anyReqBodySchema = schema.any().allowNull().optional();
 
 /** Generates the requirements needed to call `fetch`.  If the request shouldn't be made because of an error, this throws a
  * `FetchRequirementsError` */

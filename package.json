@@ -1,6 +1,6 @@
 {
   "name": "yaschema-api-google-cloud-task-creator",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "Google Cloud createTask support for yaschema-api",
   "keywords": [
     "schema",
@@ -40,7 +40,7 @@
     "lodash-es": "^4.17.21",
     "uuid": "10.0.0",
     "yaschema": "^3.6.0",
-    "yaschema-api": "^3.7.1"
+    "yaschema-api": "^3.8.1"
   },
   "devDependencies": {
     "@eslint/compat": "1.1.1",
