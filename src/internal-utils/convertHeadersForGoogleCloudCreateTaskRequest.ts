@@ -25,6 +25,7 @@ export const convertHeadersForGoogleCloudCreateTaskRequest = ({
       return out; // Skipping
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     out[key.toLowerCase()] = String(value);
     return out;
   }, {});
