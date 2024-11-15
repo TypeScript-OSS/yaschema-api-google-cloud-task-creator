@@ -2,15 +2,16 @@ import type { google } from '@google-cloud/tasks/build/protos/protos';
 import type { CallOptions } from 'google-gax';
 import { v4 as uuid } from 'uuid';
 import type { ValidationMode } from 'yaschema';
-import {
-  type AnyBody,
-  type AnyHeaders,
-  type AnyParams,
-  type AnyQuery,
-  type AnyStatus,
-  type ApiRequest,
-  type GenericHttpApi,
-  type HttpApi
+import type {
+  AnyBody,
+  AnyHeaders,
+  AnyParams,
+  AnyQuery,
+  AnyStatus,
+  ApiRequest,
+  ApiRoutingContext,
+  GenericHttpApi,
+  HttpApi
 } from 'yaschema-api';
 
 import { getGoogleCloudLocationForRouteType } from '../../config/google-cloud-location.js';
@@ -83,8 +84,9 @@ export const createGoogleCloudTask = async <
     limitMode = DEFAULT_TASK_LIMIT_MODE,
     limitMSec = DEFAULT_TASK_LIMIT_MSEC,
     limitType = DEFAULT_TASK_LIMIT_TYPE,
-    limitNameExtension = ''
-  }: CreateGoogleCloudTaskOptions = {}
+    limitNameExtension = '',
+    context
+  }: CreateGoogleCloudTaskOptions & { context?: ApiRoutingContext } = {}
 ): Promise<CreateTaskResult> => {
   if (api.method === 'LINK' || api.method === 'UNLINK') {
     throw new Error("LINK and UNLINK aren't supported by yaschema-api-google-cloud-task-creator");
@@ -94,7 +96,8 @@ export const createGoogleCloudTask = async <
 
   try {
     const { url, headers, body } = await generateGoogleCloudCreateTaskRequirementsFromApiRequest(api, req, {
-      validationMode: requestValidationMode
+      validationMode: requestValidationMode,
+      context
     });
 
     const scheduleTimeMSec = getScheduleTimeMSec({ delayMSec, limitMode, limitMSec });
