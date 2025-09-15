@@ -30,6 +30,8 @@ describe('populateParamMarkersInUrl', () => {
   });
 
   it('should throw error if there are missing params', () => {
-    expect(() => populateParamMarkersInUrl('http://www.fakedomain.com/{myParam1}/{myParam2}/go', { myParam1: 'hello' })).toThrowError();
+    expect(
+      (async () => populateParamMarkersInUrl('http://www.fakedomain.com/{myParam1}/{myParam2}/go', { myParam1: 'hello' }))()
+    ).rejects.toThrow();
   });
 });
